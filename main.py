@@ -39,7 +39,5 @@ if __name__ == '__main__':
         cur_folder = Path.cwd()
         data_folder = os.path.join(cur_folder, "datasets", "data_10v_12x12")
         cfg_ag_folder = os.path.join(cur_folder, "cfg_1")
-        
-    print("estou aqui", cur_folder)
 
     main(data_folder, cfg_ag_folder)

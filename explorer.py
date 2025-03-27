@@ -9,8 +9,6 @@ from abc import ABC, abstractmethod
 from vs.abstract_agent import AbstAgent
 from vs.constants import VS
 
-
-
 class Explorer(AbstAgent):
     def __init__(self, env, config_file, resc):
         """ Construtor do agente random on-line
