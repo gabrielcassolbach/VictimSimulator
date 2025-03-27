@@ -17,7 +17,7 @@ def main(data_folder_name, config_ag_folder_name):
     
     # Instantiate the environment
     env = Env(data_folder)
-    print("testing bazucas")
+
     # Instantiate master_rescuer
     # This agent unifies the maps and instantiate other 3 agents
     rescuer_file = os.path.join(config_ag_folder, "rescuer_1_config.txt")
@@ -45,5 +45,4 @@ if __name__ == '__main__':
         data_folder_name = os.path.join(cur_folder, "datasets", "data_300v_90x90")
         config_ag_folder_name = os.path.join(cur_folder, "cfg_1")
     
-    print("testing_bazucas: ", data_folder_name)
     main(data_folder_name, config_ag_folder_name)
