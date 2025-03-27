@@ -1,15 +1,38 @@
-VictimSim2
-==========
+# EXAMPLE 01: Manually controlled explorer and fixed rescue plan
+This example allows the user to control the explorer agent with commands given by the keyboard. Upon reaching the time limit, the explorer agent calls the rescuer, which in turn executes a plan stored in memory.
 
-A simulator designed for testing search algorithms and other IA techniques in rescue scenarios is utilized within the Artificial Intelligence course at UTFPR, Curitiba. Known as VictimSim2, this simulator is useful for studying catastrophic scenarios within a 2D grid environment, where artificial agents embark on search and rescue missions to locate and aid victims.
+How to use:
+- download the **[ex01_manual]** folder (use [DownGit](https://downgit.github.io) or [direct here](https://downgit.github.io/#/home?url=https://github.com/tacla/VictimSim2/tree/main/ex01_manual))
+- extract all the files in the selected **[target]** folder
+  
+- download the **[vs]** folder (use [DownGit](https://downgit.github.io) or [direct here](https://downgit.github.io/#/home?url=https://github.com/tacla/VictimSim2/tree/main/vs))
+- extract all the files and copy the **[vs]** folder to the **[target]** folder
 
-Key features of the simulator
------------------------------
+You should get a file structure like:
 
-- The environment comprises a 2D grid, indexed by coordinates (column, row) or (x, y). The origin is situated at the upper left corner, with the y-axis extending downwards and the x-axis extending towards the right. While the absolute coordinates are accessible solely to the environment simulator, users are encouraged to establish their own coordinate system for the agents.
-- Each cell within the 2D grid is assigned a degree of difficulty for accessibility, ranging from values greater than zero to 100. The maximum value of 100 indicates the presence of an impassable wall, while higher values signify increasingly challenging access. Conversely, values less than or equal to one denote easier entry.
-- The environment accommodates one or more agents, with each agent assigned a customizable color via configuration files.
-- Collision detection is integrated to identify instances where an agent collides with walls or reaches the grid's boundaries, termed as "BUMPED" perception.
-- Agents possess the ability to detect obstacles and grid boundaries within their immediate neighborhood, one step ahead from their current position.
-- Multiple agents can occupy the same cell simultaneously without causing collisions.
-- The simulator regulates the scheduling of each agent based on their state: ACTIVE, IDLE, ENDED, or DEAD. Only active agents are permitted to execute actions, and the simulator manages the allotted execution time for each agent; upon expiry, the agent is considered DEAD.
++ **[target]**
+   + main.py
+   + rescuer.py
+   + explorer.py
+   + **[vs]**
+      + abstract_agent.py
+      + constants.py
+      + environment.py
+      + physical_agent.py
+
+## Datasets ##
+The datasets include information about the environment (such as size and obstacles) and the victims (including their positions and vital signs). To ensure other systems can also access and utilize these datasets, let's create a folder outside the multiagent system's scope.
+- download the dataset containing [12 victims in a 12 x 12 grid](https://downgit.github.io/#/home?url=https://github.com/tacla/VictimSim2/tree/main/datasets/data_10v_12X12)
+- extract all the files in the folder **[datasets]**. This last is at the same level of the **[target]** folder.
+
+You should get a file structure like:
++ **[target]**
++ **[datasets]**
+  + [data_10v_12X12]
+    + env_config.txt          *environment configuration*
+    + env_obst.txt            *obstacles' positions*
+    + env_victims.txt         *victims' positions*
+    + env_vital_signals.txt   *victims' vital signals*
+   
+## Run ##
+Now, you can run the system from the *main.py*
