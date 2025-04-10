@@ -1,15 +1,8 @@
--- Passo 1: criar um .venv:
+Passo a passo para a construção do projeto: 
 
-    python -m venv .venv
+- Construir o Explorador:
+    - implementar uma DFS-Online com uma pilha de retorno à base;
+    - implementar um algoritmo para diminuir o tempo de volta e aumentar o tempo de exploração;
 
--- Passo 2: entrar no .venv:
-
-    source .venv/bin/activate
-
--- Passo 3: instalar todas as dependências do projeto:
-
-    pip install -r requirements.txt
-
--- Passo 4: toda vez que instalar uma dependência nova ao projeto, gere um novo arquivo requirements utilizando o comando abaixo:
-
-    pip freeze > requirements.txt
+- Construir o Socorrista:
+    - a definir
