@@ -4,7 +4,7 @@ import time
 
 ## importa classes
 from vs.environment import Env
-from explorer2 import Explorer
+from explorer_dfs import Explorer
 from rescuer import Rescuer
 
 def main(data_folder_name):
@@ -25,7 +25,10 @@ def main(data_folder_name):
 
     # Explorer needs to know rescuer to send the map
     # that's why rescuer is instatiated before
-    exp = Explorer(env, explorer_file, resc)
+    exp = Explorer(env, explorer_file, resc, 0)
+    exp2 = Explorer(env, explorer_file, resc, 2)
+    exp3 = Explorer(env, explorer_file, resc, 4)
+    exp4 = Explorer(env, explorer_file, resc, 6)
 
     # Run the environment simulator
     env.run()
