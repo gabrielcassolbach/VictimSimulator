@@ -51,7 +51,6 @@ class Explorer(AbstAgent):
         return neighbors
 
 
-
     def explore(self):
         neighbors = self.get_unvisited_neighbors()
         print(f"Exploring neighbors: {neighbors}")

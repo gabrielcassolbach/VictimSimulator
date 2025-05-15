@@ -4,7 +4,7 @@ import time
 
 ## importa classes
 from vs.environment import Env
-from explorer import Explorer
+from explorer2 import Explorer
 from rescuer import Rescuer
 
 def main(data_folder_name):
@@ -38,6 +38,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         data_folder_name = sys.argv[1]
     else:
-        data_folder_name = os.path.join("datasets", "data_10v_12x12")
+        data_folder_name = os.path.join("datasets", "data_430v_94x94")
         
     main(data_folder_name)
