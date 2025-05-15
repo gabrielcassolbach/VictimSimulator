@@ -58,7 +58,6 @@ class Explorer(AbstAgent):
 
     def explore(self):
         neighbors = self.get_unvisited_neighbors()
-        print(f"Exploring neighbors: {neighbors}")
 
         if neighbors:
             dx, dy = neighbors[0]
@@ -136,7 +135,7 @@ class Explorer(AbstAgent):
             self.start_in_direction()
             self.start = False
         consumed_time = self.TLIM - self.get_rtime()
-        print(f"{self.NAME}: consumed time {consumed_time}, rtime {self.get_rtime()}")
+        # print(f"{self.NAME}: consumed time {consumed_time}, rtime {self.get_rtime()}")
         if consumed_time < self.get_rtime():
             self.explore()
             return True
