@@ -3,7 +3,7 @@ import os
 import time
 
 from vs.environment import Env
-from explorer3 import Explorer
+from maze_explorer import Explorer
 from rescuer import Rescuer
 
 def main(data_folder_name):
