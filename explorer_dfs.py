@@ -34,7 +34,7 @@ class Explorer(AbstAgent):
         self.initial_direction = initial_d
         self.x = 0
         self.y = 0
-        self.map = Map()
+        self.map = Map() 
         self.victims = {}
         self.visited = set()
         self.visited.add((self.x, self.y))
@@ -53,7 +53,6 @@ class Explorer(AbstAgent):
         neighbors.sort(key=lambda tup: (tup[0] - self.initial_direction) % 8)
 
         return [(dx, dy) for _, dx, dy in neighbors]
-
 
 
     def explore(self):
@@ -127,9 +126,6 @@ class Explorer(AbstAgent):
         else:
             print(f"{self.NAME}: Failed to start in direction {direction}, obstacle or invalid move.")
 
-            
-
-        
     def deliberate(self) -> bool:
         if(self.start):
             self.start_in_direction()
@@ -147,7 +143,3 @@ class Explorer(AbstAgent):
 
         self.come_back()
         return True
-        
-
-
-        
