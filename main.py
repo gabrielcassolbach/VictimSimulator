@@ -4,7 +4,7 @@ import time
 
 from vs.environment import Env
 from maze_explorer import Explorer
-from rescuer import Rescuer
+from maze_rescuer import Rescuer
 
 def main(data_folder_name):
     current_folder = os.path.abspath(os.getcwd())
