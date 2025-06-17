@@ -6,6 +6,7 @@ from vs.physical_agent import PhysAgent
 from vs.constants import VS
 from abc import ABC, abstractmethod
 from sklearn.cluster import KMeans
+from victims_sequencer import Sequencer
 import numpy as np
 
 class Rescuer(AbstAgent):
@@ -19,7 +20,7 @@ class Rescuer(AbstAgent):
         self.plan_visited = set()   
         self.plan_rtime = self.TLIM 
         self.plan_walk_time = 0.0   
-        self.victims_group = []
+        self.victims_clusters = {}
         self.x = 0                  
         self.y = 0                  
         self.set_state(VS.IDLE)
@@ -32,9 +33,7 @@ class Rescuer(AbstAgent):
         return labels, centroids
 
     def go_save_victims(self, map, victims):
-        print(f"\n\n*** R E S C U E R ***")
         self.map = map
-        print(f"{self.NAME} Map received from the explorer")
         self.victims = victims
 
         victims_positions = [coord for coord, _ in victims.values()]
@@ -44,11 +43,27 @@ class Rescuer(AbstAgent):
     
     def divide_victims(self, victims_positions):
         labels, _ = self.cluster_victims(victims_positions)
-        self.victims_group = list(zip(victims_positions, labels.tolist()))
+        victims_group = list(zip(victims_positions, labels.tolist()))
+        for pos, cluster_id in victims_group:
+            self.victims_clusters.setdefault(cluster_id, []).append(pos)
+        
+    def victims_rescue_seq(self):
+        rescue_plan = {}
+
+        for cluster_id, victims in self.victims_clusters.items():
+            if len(victims) == 1:
+                rescue_plan[cluster_id] = victims  
+            else:
+                best_route, best_distance = Sequencer().genetic_algorithm(victims)
+                rescue_plan[cluster_id] = best_route
+            
+        return rescue_plan
+        
 
     def __planner(self, victims_positions):
         self.divide_victims(victims_positions)
-        
+        rescue_plan = self.victims_rescue_seq()
+
         # 1 - Subdividir as vítimas encontradas em grupos. 
         #----> implementar algoritmo de clustering. 
         # 2 - Definir a sequência de salvamento das vítimas. 
@@ -78,4 +93,5 @@ class Rescuer(AbstAgent):
             print(f"{self.NAME} Plan fail - walk error - agent at ({self.x}, {self.x})")
 
         return True
+
 
