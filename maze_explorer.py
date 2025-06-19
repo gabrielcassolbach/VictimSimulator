@@ -10,13 +10,14 @@ import time
 from map import Map
 
 class Explorer(AbstAgent):
-    def __init__(self, env, config_file, resc):
+    def __init__(self, env, config_file, direction, resc):
         super().__init__(env, config_file)
         self.set_state(VS.ACTIVE) 
         self.resc = resc
         self.total_exploration_time = 0
         self.worst_move_scenario = 0
         self.exploration_flag = True
+        self.direction_preference = direction
         self.x = 0  
         self.y = 0 
         self.path = []
@@ -29,6 +30,22 @@ class Explorer(AbstAgent):
 
         self.map.add((self.x, self.y), 1, VS.NO_VICTIM, self.check_walls_and_lim())
 
+    def direction_priority(self, dx, dy):
+        score = 0
+        if self.direction_preference == "up-right":
+            score += dy  
+            score -= dx 
+        elif self.direction_preference == "up-left":
+            score += dy 
+            score += dx  
+        elif self.direction_preference == "down-left":
+            score -= dy  
+            score += dx 
+        elif self.direction_preference == "down-right":
+            score -= dy  
+            score -= dx 
+        return score
+
     def look_around(self):
         obstacles = self.check_walls_and_lim()
         neighbors = []
@@ -38,6 +55,8 @@ class Explorer(AbstAgent):
             new_pos = (self.x + dx, self.y + dy)
             if obstacles[direction] == VS.CLEAR and new_pos not in self.visited:
                 neighbors.append((dx, dy))
+
+        neighbors.sort(key=lambda n: self.direction_priority(n[0], n[1]))
 
         return [(dx, dy) for dx, dy in neighbors]
             

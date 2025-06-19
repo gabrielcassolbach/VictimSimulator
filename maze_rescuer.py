@@ -18,7 +18,7 @@ class Rescuer(AbstAgent):
         self.nb_of_explorers = nb_of_explorers
         self.received_maps = 0
         self.map = Map()             
-        self.victims = {} 
+        self.all_victims = {} 
         self.plan = []              
         self.plan_x = 0             
         self.plan_y = 0             
@@ -41,10 +41,10 @@ class Rescuer(AbstAgent):
     def sync_explorers(self, explorer_map, victims):
         self.received_maps += 1
         self.map.update(explorer_map)
-        self.victims.update(victims)
+        self.all_victims.update(victims)
 
         if self.received_maps == self.nb_of_explorers:
-            victims_positions = [coord for coord, _ in victims.values()]
+            victims_positions = [coord for coord, _ in self.all_victims.values()]
             clusters = self.divide_victims(victims_positions)
 
             rescuers = [None] * 4
