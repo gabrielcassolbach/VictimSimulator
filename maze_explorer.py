@@ -165,7 +165,7 @@ class Explorer(AbstAgent):
             self.returnto_base()
             
         if self.x == 0 and self.y == 0:
-            self.resc.go_save_victims(self.map, self.victims)
+            self.resc.sync_explorers(self.map, self.victims)
             return False
 
         return True

@@ -12,14 +12,13 @@ def main(data_folder_name):
 
     env = Env(data_folder)
 
-    rescuer_file = os.path.join(data_folder, "rescuer_config.txt")
-
-    resc = Rescuer(env, rescuer_file)
+    rescuer_file = os.path.join(data_folder, "rescuer_1_config.txt")
+    master_rescuer = Rescuer(env, rescuer_file, 1)
 
     filename = f"explorer_config.txt"
     explorer_file = os.path.join(data_folder, filename)
     
-    Explorer(env, explorer_file, resc)
+    Explorer(env, explorer_file, master_rescuer)
 
     env.run()
     

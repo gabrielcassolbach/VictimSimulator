@@ -7,20 +7,26 @@ from vs.constants import VS
 from abc import ABC, abstractmethod
 from sklearn.cluster import KMeans
 from victims_sequencer import Sequencer
+from collections import deque
 import numpy as np
+import heapq
+import time
 
 class Rescuer(AbstAgent):
-    def __init__(self, env, config_file):
+    def __init__(self, env, config_file, nb_of_explorers, cluster=[]):
         super().__init__(env, config_file)
-        self.map = None             
-        self.victims = None         
+        self.nb_of_explorers = nb_of_explorers
+        self.received_maps = 0
+        self.map = Map()             
+        self.victims = {} 
         self.plan = []              
         self.plan_x = 0             
         self.plan_y = 0             
         self.plan_visited = set()   
         self.plan_rtime = self.TLIM 
         self.plan_walk_time = 0.0   
-        self.victims_clusters = {}
+        self.cluster = cluster
+        self.rescue_plan = {}
         self.x = 0                  
         self.y = 0                  
         self.set_state(VS.IDLE)
@@ -32,45 +38,99 @@ class Rescuer(AbstAgent):
         centroids = kmeans.cluster_centers_
         return labels, centroids
 
-    def go_save_victims(self, map, victims):
-        self.map = map
-        self.victims = victims
+    def sync_explorers(self, explorer_map, victims):
+        self.received_maps += 1
+        self.map.update(explorer_map)
+        self.victims.update(victims)
 
-        victims_positions = [coord for coord, _ in victims.values()]
+        if self.received_maps == self.nb_of_explorers:
+            victims_positions = [coord for coord, _ in victims.values()]
+            clusters = self.divide_victims(victims_positions)
 
-        self.__planner(victims_positions)       
-        self.set_state(VS.ACTIVE)
+            rescuers = [None] * 4
+            rescuers[0] = self 
+
+            self.cluster = [clusters[0]]
+
+            for i in range(1, 4):
+                filename = f"rescuer_{i+1:1d}_config.txt"
+                config_file = os.path.join(self.config_folder, filename)
+                rescuers[i] = Rescuer(self.get_env(), config_file, 4, [clusters[i]]) 
+                rescuers[i].map = self.map    
+
+            for i, rescuer in enumerate(rescuers):
+                rescuer.victims_rescue_seq()
+                rescuer.planner()
+                rescuer.set_state(VS.ACTIVE)
+           
     
     def divide_victims(self, victims_positions):
         labels, _ = self.cluster_victims(victims_positions)
         victims_group = list(zip(victims_positions, labels.tolist()))
+        clusters = {}
         for pos, cluster_id in victims_group:
-            self.victims_clusters.setdefault(cluster_id, []).append(pos)
-        
+            clusters.setdefault(cluster_id, []).append(pos)
+        return clusters
+
     def victims_rescue_seq(self):
         rescue_plan = {}
-
-        for cluster_id, victims in self.victims_clusters.items():
+        
+        for cluster_id, victims in enumerate(self.cluster):
             if len(victims) == 1:
-                rescue_plan[cluster_id] = victims  
+                rescue_plan = victims  
             else:
                 best_route, best_distance = Sequencer().genetic_algorithm(victims)
-                rescue_plan[cluster_id] = best_route
+                rescue_plan = best_route
             
-        return rescue_plan
-        
+        self.rescue_plan = rescue_plan
 
-    def __planner(self, victims_positions):
-        self.divide_victims(victims_positions)
-        rescue_plan = self.victims_rescue_seq()
+    def get_neighbors(self, node):
+        neighbors = []
 
-        # 1 - Subdividir as vítimas encontradas em grupos. 
-        #----> implementar algoritmo de clustering. 
-        # 2 - Definir a sequência de salvamento das vítimas. 
-        #----> implementar algoritmo genético. 
-        # 3 - Definir, utilizando um algortimo de busca, um caminho entre 
-        # as vítimas. A*, por exemplo.
+        for direction in range(8):
+            dx, dy = AbstAgent.AC_INCR[direction]
+            coord = (node[0] + dx, node[1] + dy)
+            if self.map.in_map(coord):
+                neighbors.append(coord)
+
+        return neighbors
+
+    def calculatepath_tovictim(self, start, goal):
+        queue = deque([start]) 
+        visited = set([start]) 
+        parent = {}
+
+        while queue: 
+            current = queue.popleft()
+
+            if current == goal:
+                path = []
+                while current != start:
+                    prev = parent[current]
+                    dx = current[0] - prev[0]
+                    dy = current[1] - prev[1]
+                    path.append((dx, dy, False))
+                    current = prev
+                path.reverse()
+                if goal[0] != 0 and goal[1] != 0:
+                    dx, dy, has_victim = path[-1]
+                    path[-1] = (dx, dy, True)
+                return path
+
+            for neighbor in self.get_neighbors(current):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    parent[neighbor] = current
+                    queue.append(neighbor)
+        return {}
+
         
+    def planner(self):
+        prev_goal = (0, 0)
+        for coord in self.rescue_plan:
+            self.plan.extend(self.calculatepath_tovictim(prev_goal, coord))
+            prev_goal = coord
+        self.plan.extend(self.calculatepath_tovictim(prev_goal, (0, 0)))
 
     def deliberate(self) -> bool:
         if self.plan == []:
