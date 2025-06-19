@@ -101,6 +101,7 @@ class Explorer(AbstAgent):
         return {}
                 
     def explore(self):
+        print("exploring ....")
         neighbors = self.look_around()
 
         if neighbors:
@@ -111,7 +112,7 @@ class Explorer(AbstAgent):
             result = self.walk(dx, dy)
             rtime_aft = self.get_rtime()
 
-            self.total_exploration_time += (rtime_bef - rtime_aft) 
+            #self.total_exploration_time += (rtime_bef - rtime_aft) 
             self.worst_move_scenario = max(self.worst_move_scenario, rtime_bef - rtime_aft)           
 
             if result == VS.EXECUTED:
@@ -130,7 +131,7 @@ class Explorer(AbstAgent):
             result = self.walk(dx, dy)
             rtime_aft = self.get_rtime()
 
-            self.total_exploration_time += (rtime_aft - rtime_bef) 
+            #self.total_exploration_time += (rtime_aft - rtime_bef) 
 
             if result == VS.EXECUTED:
                 self.update_coordinates(dx, dy)
@@ -141,16 +142,16 @@ class Explorer(AbstAgent):
         return path, len(path)*self.worst_move_scenario
 
     def can_explore(self):
-        remaining_time = self.TLIM - self.total_exploration_time
         path, return_time = self.estimate_return_time()
 
-        if return_time >= remaining_time:
+        if return_time + 10 >= self.get_rtime():
             self.exploration_flag = False
             return path
 
         return path
         
     def returnto_base(self):  
+        print("returning to base....")
         next_value = self.return_path[self.path_it]
         self.path_it += 1
         self.walk(next_value[0], next_value[1])
@@ -158,6 +159,7 @@ class Explorer(AbstAgent):
         self.y += next_value[1]
     
     def deliberate(self) -> bool:
+        print("remanining time: ", self.get_rtime())
         if self.exploration_flag: 
             self.explore()
             self.return_path = self.can_explore()
