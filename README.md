@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------#
-to run the project, follow the steps bellow: 
+
+ - To run the project, follow the steps bellow: 
 
 1. create a virtual environment in python:
     - python3 -m venv .venv
