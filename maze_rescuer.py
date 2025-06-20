@@ -9,7 +9,6 @@ from sklearn.cluster import KMeans
 from victims_sequencer import Sequencer
 from collections import deque
 import numpy as np
-import heapq
 import time
 
 class Rescuer(AbstAgent):
@@ -17,7 +16,8 @@ class Rescuer(AbstAgent):
         super().__init__(env, config_file)
         self.nb_of_explorers = nb_of_explorers
         self.received_maps = 0
-        self.map = Map()             
+        self.map = Map() 
+        self.walk_constant = 1.75
         self.all_victims = {} 
         self.plan = []              
         self.plan_x = 0             
@@ -62,7 +62,6 @@ class Rescuer(AbstAgent):
                 rescuer.victims_rescue_seq()
                 rescuer.planner()
                 rescuer.set_state(VS.ACTIVE)
-           
     
     def divide_victims(self, victims_positions):
         labels, _ = self.cluster_victims(victims_positions)
@@ -75,11 +74,11 @@ class Rescuer(AbstAgent):
     def victims_rescue_seq(self):
         rescue_plan = {}
         
-        for cluster_id, victims in enumerate(self.cluster):
+        for _, victims in enumerate(self.cluster):
             if len(victims) == 1:
                 rescue_plan = victims  
             else:
-                best_route, best_distance = Sequencer().genetic_algorithm(victims)
+                best_route, _ = Sequencer().genetic_algorithm(victims)
                 rescue_plan = best_route
             
         self.rescue_plan = rescue_plan
@@ -127,10 +126,27 @@ class Rescuer(AbstAgent):
         
     def planner(self):
         prev_goal = (0, 0)
+        all_plans = []
+        total_time = 0
+       
         for coord in self.rescue_plan:
-            self.plan.extend(self.calculatepath_tovictim(prev_goal, coord))
+            new_plan = self.calculatepath_tovictim(prev_goal, coord)
+            all_plans.append(new_plan)
+            total_time += len(new_plan)*self.walk_constant
             prev_goal = coord
-        self.plan.extend(self.calculatepath_tovictim(prev_goal, (0, 0)))
+
+        return_plan = self.calculatepath_tovictim(prev_goal, (0, 0))
+        
+        while total_time + len(return_plan)*self.walk_constant >= self.TLIM and len(all_plans) > 0:
+            total_time -= len(all_plans.pop())*self.walk_constant
+            it = len(all_plans) - 1
+            return_plan = self.calculatepath_tovictim(self.rescue_plan[it], (0, 0))
+            
+        if len(all_plans) > 0:
+            all_plans.append(return_plan)
+        
+        for plan in all_plans:
+            self.plan.extend(plan)
 
     def deliberate(self) -> bool:
         if self.plan == []:

@@ -144,9 +144,7 @@ class Explorer(AbstAgent):
             dx = prev_x - self.x 
             dy = prev_y - self.y 
 
-            rtime_bef = self.get_rtime()
             result = self.walk(dx, dy)
-            rtime_aft = self.get_rtime()
 
             if result == VS.EXECUTED:
                 self.update_coordinates(dx, dy)
