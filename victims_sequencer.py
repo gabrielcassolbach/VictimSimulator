@@ -18,6 +18,10 @@ class Sequencer:
     def genetic_algorithm(self, victims, population_size=50, generations=100,
                         mutation_rate=0.1, tournament_size=3):
         
+        # --- precompute origin distances ---
+        dist_to_origin = { pt: self.euclidean_distance(pt, (0,0)) for pt in victims }
+        max_dist       = max(dist_to_origin.values())
+        
         # ============ Inicialização ============
         def create_individual():
             individual = victims[:]
@@ -28,7 +32,14 @@ class Sequencer:
 
         # ============ Avaliação ============
         def fitness(individual):
-            return self.total_distance(individual)
+            tour_length = self.total_distance(individual)
+
+            order_penalty = sum(
+                i * (max_dist - dist_to_origin[pt])
+                for i, pt in enumerate(individual)
+            )
+
+            return tour_length + 2 * order_penalty
 
         # ============ Seleção (Torneio) ============
         def tournament_selection():
