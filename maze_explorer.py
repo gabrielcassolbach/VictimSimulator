@@ -21,8 +21,8 @@ class Explorer(AbstAgent):
         self.exploration_flag = True
         self.primary_direction = primary_direction
         self.secondary_direction = secondary_direction
-        self.reduced_area = min(self.height, self.width)/6
-        self.base_area = min(self.height, self.width)/6
+        self.reduced_area = min(self.height, self.width)/4
+        self.base_area = min(self.height, self.width)/4
         self.max_area = max(self.height, self.width)
         self.x = 0  
         self.y = 0 
@@ -39,19 +39,27 @@ class Explorer(AbstAgent):
 
     def direction_priority(self, dx, dy):
         score = 0 
+        progress = (self.TLIM - self.get_rtime())/self.TLIM
         
-        if self.primary_direction == "up":
-            score -= dy
-        elif self.primary_direction == "down":
-            score += dy
-        elif self.primary_direction == "left":
-            score -= dx
-        elif self.primary_direction == "right":
-            score += dx
+        if progress < 0.5:
+            if self.primary_direction == "up":
+                score -= dy
+            elif self.primary_direction == "down":
+                score += dy
+            elif self.primary_direction == "left":
+                score -= dx
+            elif self.primary_direction == "right":
+                score += dx
+        else: 
+            if self.secondary_direction == "up":
+                score -= dy
+            elif self.secondary_direction == "down":
+                score += dy
+            elif self.secondary_direction == "left":
+                score -= dx
+            elif self.secondary_direction == "right":
+                score += dx
             
-        if dx != 0 and dy != 0:
-            score -= 32
-        
         return score
     
     def within_radius(self, coord):
@@ -174,6 +182,8 @@ class Explorer(AbstAgent):
         point = (0, 0)
         if len(self.return_points) > 0:
             point = self.return_points.pop()
+        else: 
+            self.exploration_flag = False
         
         if point not in self.visited:
             path = self.compute_path_to_base(point)
@@ -183,17 +193,6 @@ class Explorer(AbstAgent):
                 self.y += pt[1]
                 self.visited.add((self.x, self.y))
             return
-        
-        while self.path and len(self.return_path) == 0:
-            prev_x, prev_y = self.path.pop()
-            dx = prev_x - self.x 
-            dy = prev_y - self.y 
-
-            result = self.walk(dx, dy)
-
-            if result == VS.EXECUTED:
-                self.update_coordinates(dx, dy)
-                return
     
     def estimate_return_time(self):
         path = self.compute_path_to_base((0, 0))
@@ -216,15 +215,14 @@ class Explorer(AbstAgent):
         self.y += next_value[1]
         
     def update_area(self):
-        growth_phase = 1.0
+        growth_phase = 2.0
         progress = (self.TLIM - self.get_rtime())/self.TLIM
         
-        if progress < 0.85:
-            growth_phase =  progress / 0.85
+        if progress < 0.1:
+            growth_phase =  progress / 0.1
 
         self.reduced_area = self.base_area + growth_phase * (self.max_area - self.base_area)
-        print("reduced_area ", self.reduced_area)
-    
+
     def deliberate(self) -> bool:
         self.update_area()
         
