@@ -11,6 +11,8 @@ def main(data_folder_name):
     data_folder = os.path.abspath(os.path.join(current_folder, data_folder_name))
 
     env = Env(data_folder)
+    maze_width = Env(data_folder).dic['GRID_WIDTH']
+    maze_height = Env(data_folder).dic['GRID_HEIGHT']
 
     rescuer_file = os.path.join(data_folder, "rescuer_1_config.txt")
     master_rescuer = Rescuer(env, rescuer_file, 4)
@@ -18,10 +20,10 @@ def main(data_folder_name):
     filename = f"explorer_config.txt"
     explorer_file = os.path.join(data_folder, filename)
     
-    Explorer(env, explorer_file, "up-left", master_rescuer)
-    Explorer(env, explorer_file, "up-right", master_rescuer)
-    Explorer(env, explorer_file, "down-left", master_rescuer)
-    Explorer(env, explorer_file, "down-right", master_rescuer)
+    Explorer(env, explorer_file, "left", "up", maze_width, maze_height, master_rescuer)
+    Explorer(env, explorer_file, "right", "down", maze_width, maze_height, master_rescuer)
+    Explorer(env, explorer_file, "down", "left", maze_width, maze_height, master_rescuer)
+    Explorer(env, explorer_file, "up", "right", maze_width, maze_height, master_rescuer)
 
     env.run()
     
