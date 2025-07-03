@@ -22,7 +22,7 @@ def main(data_folder_name):
     
     directions = [["down", "left"], ["left", "up"], ["right", "down"], ["up", "right"]]
     
-    for i in range(1, 2):
+    for i in range(1, 5):
         filename = f"explorer_{i:1d}_config.txt"
         explorer_file = os.path.join(data_folder, filename)
         Explorer(env, explorer_file, directions[i-1][0], directions[i-1][1], maze_width, maze_height, master_rescuer)
