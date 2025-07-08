@@ -1,15 +1,19 @@
 import os
 import random
+import numpy as np
+import time
+import joblib
+import csv
 from map import Map
 from vs.abstract_agent import AbstAgent
 from vs.physical_agent import PhysAgent
 from vs.constants import VS
 from abc import ABC, abstractmethod
 from sklearn.cluster import KMeans
-from victims_sequencer import Sequencer
+from sequencer import Sequencer
 from collections import deque
-import numpy as np
-import time
+from pathlib import Path
+
 
 class Rescuer(AbstAgent):
     def __init__(self, env, config_file, nb_of_explorers, cluster=[]):
@@ -17,7 +21,7 @@ class Rescuer(AbstAgent):
         self.nb_of_explorers = nb_of_explorers
         self.received_maps = 0
         self.map = Map() 
-        self.walk_constant = 1.75
+        self.walk_constant = 1.525
         self.all_victims = {} 
         self.plan = []              
         self.plan_x = 0             
@@ -31,12 +35,58 @@ class Rescuer(AbstAgent):
         self.y = 0                  
         self.set_state(VS.IDLE)
 
-    def cluster_victims(self, victims_positions, n_clusters=4, random_state=42):
+    _SEVERITY_CLF_PATH = Path("models/severity_clf.joblib")
+    _SEVERITY_REG_PATH = Path("models/severity_reg.joblib")
+    
+    def _load_or_train_models(self, X_train = None, y_class = None, y_value = None):
+        if self._SEVERITY_CLF_PATH.exists() and self._SEVERITY_REG_PATH.exists():
+            self.classifier = joblib.load(self._SEVERITY_CLF_PATH)
+            self.regressor  = joblib.load(self._SEVERITY_REG_PATH)
+            return
+
+    def predict_severity_and_class(self):
+        if not hasattr(self, "classifier") or not hasattr(self, "regressor"):
+            raise RuntimeError("Modelos não foram carregados/treinados.")
+
+        with open("output/victim_data.txt", "w", encoding="utf-8") as f:
+            for vic_id, (coords, vitals) in self.all_victims.items():
+                X = np.array(vitals[1:6]).reshape(1, -1)
+                severity_class = int(self.classifier.predict(X)[0])
+                severity_value = float(self.regressor.predict(X)[0])
+                f.write(f"{vic_id}, {coords[0]}, {coords[1]}, {severity_value}, {severity_class}\n")        
+                vitals.extend([severity_value, severity_class])
+
+    def save_cluster_csv(self, cluster_id, cluster):
+        filename = f"clusters/cluster{cluster_id}.txt"
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for vic_id, coord, signals in cluster:
+                x, y = coord    
+                vs = signals       
+                writer.writerow([vic_id, x, y, vs[6], vs[7]])
+
+    def save_sequence_csv(self, sequence, sequence_id):
+        filename = f"clusters/seq{sequence_id}.txt"
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for vic_id, coord, signals in sequence:
+                x, y = coord     
+                vs = signals     
+                writer.writerow([vic_id, x, y, vs[6], vs[7]])
+
+    def cluster_victims(self, victims_data, n_clusters=4, random_state=42):
+        victims_positions = [coord for _, coord, _ in victims_data]
         X = np.array(victims_positions)
         kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
         labels = kmeans.fit_predict(X)
         centroids = kmeans.cluster_centers_
-        return labels, centroids
+
+        clustered_data = {i: [] for i in range(n_clusters)}
+        for i, (vic_id, coord, signals) in enumerate(victims_data):
+            cluster_label = labels[i]
+            clustered_data[cluster_label].append((vic_id, coord, signals))
+    
+        return clustered_data
 
     def sync_explorers(self, explorer_map, victims):
         self.received_maps += 1
@@ -44,44 +94,56 @@ class Rescuer(AbstAgent):
         self.all_victims.update(victims)
 
         if self.received_maps == self.nb_of_explorers:
-            victims_positions = [coord for coord, _ in self.all_victims.values()]
-            clusters = self.divide_victims(victims_positions)
+            victims_data = [
+                (vic_id, coord, vital_signals)
+                for vic_id, (coord, vital_signals) in self.all_victims.items()
+            ]
+
+            clusters = self.cluster_victims(victims_data)
+            self._load_or_train_models()
+            self.predict_severity_and_class()
+
+            for it in range(0, 4):
+                self.save_cluster_csv(it + 1, clusters[it])
 
             rescuers = [None] * 4
             rescuers[0] = self 
-
-            self.cluster = [clusters[0]]
+            self.cluster = clusters[0]
 
             for i in range(1, 4):
                 filename = f"rescuer_{i+1:1d}_config.txt"
                 config_file = os.path.join(self.config_folder, filename)
-                rescuers[i] = Rescuer(self.get_env(), config_file, 4, [clusters[i]]) 
-                rescuers[i].map = self.map    
-
+                rescuers[i] = Rescuer(self.get_env(), config_file, 4, clusters[i]) 
+                rescuers[i].map = self.map   
+                
             for i, rescuer in enumerate(rescuers):
                 rescuer.victims_rescue_seq()
+                self.save_sequence_csv(rescuers[i].rescue_plan, i+1)             
                 rescuer.planner()
                 rescuer.set_state(VS.ACTIVE)
-    
-    def divide_victims(self, victims_positions):
-        labels, _ = self.cluster_victims(victims_positions)
-        victims_group = list(zip(victims_positions, labels.tolist()))
-        clusters = {}
-        for pos, cluster_id in victims_group:
-            clusters.setdefault(cluster_id, []).append(pos)
-        return clusters
 
     def victims_rescue_seq(self):
         rescue_plan = {}
-        
-        for _, victims in enumerate(self.cluster):
-            if len(victims) == 1:
-                rescue_plan = victims  
-            else:
-                best_route, _ = Sequencer().genetic_algorithm(victims)
-                rescue_plan = best_route
+
+        id_map      = {coord: vic_id      for vic_id, coord, _       in self.cluster}
+        signals_map = {coord: signals    for _,      coord, signals in self.cluster}
+        victims = [coord for _, coord, _ in self.cluster]
+
+        if len(victims) == 1:
+            rescue_plan = victims  
+        else:
+            seq = Sequencer()
+            bfs_route = seq.bfs_like_sequence(victims)
+            best_route = seq.two_opt(bfs_route)
+            rescue_plan = best_route
             
-        self.rescue_plan = rescue_plan
+        self.rescue_plan = [
+            ( id_map[coord],      
+            coord,              
+            signals_map[coord]  
+            )
+            for coord in best_route
+        ]
 
     def get_neighbors(self, node):
         neighbors = []
@@ -129,7 +191,7 @@ class Rescuer(AbstAgent):
         all_plans = []
         total_time = 0
        
-        for coord in self.rescue_plan:
+        for _, coord, _ in self.rescue_plan:
             new_plan = self.calculatepath_tovictim(prev_goal, coord)
             all_plans.append(new_plan)
             total_time += len(new_plan)*self.walk_constant
@@ -140,7 +202,7 @@ class Rescuer(AbstAgent):
         while total_time + len(return_plan)*self.walk_constant >= self.TLIM and len(all_plans) > 0:
             total_time -= len(all_plans.pop())*self.walk_constant
             it = len(all_plans) - 1
-            return_plan = self.calculatepath_tovictim(self.rescue_plan[it], (0, 0))
+            return_plan = self.calculatepath_tovictim(self.rescue_plan[it][1], (0, 0))
             
         if len(all_plans) > 0:
             all_plans.append(return_plan)

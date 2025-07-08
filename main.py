@@ -20,12 +20,13 @@ def main(data_folder_name):
     filename = f"explorer_config.txt"
     explorer_file = os.path.join(data_folder, filename)
     
-    directions = [["down", "left"], ["left", "up"], ["right", "down"], ["up", "right"]]
-    
+    directions = [["down", "down"], ["up", "up"], ["right", "down"], ["up", "right"]]
+    quadrants = [False, False, True, True] 
+
     for i in range(1, 5):
         filename = f"explorer_{i:1d}_config.txt"
         explorer_file = os.path.join(data_folder, filename)
-        Explorer(env, explorer_file, directions[i-1][0], directions[i-1][1], maze_width, maze_height, master_rescuer)
+        Explorer(env, explorer_file, directions[i-1][0], directions[i-1][1], maze_width, maze_height, quadrants[i-1], master_rescuer)
 
     env.run()
     
@@ -37,6 +38,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         data_folder_name = sys.argv[1]
     else:
-        data_folder_name = os.path.join("datasets", "data_430v_94x94")
+        data_folder_name = os.path.join("datasets", "data_430v_100x100")
         
     main(data_folder_name)

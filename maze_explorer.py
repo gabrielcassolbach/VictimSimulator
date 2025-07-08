@@ -10,9 +10,10 @@ import time
 from map import Map
 
 class Explorer(AbstAgent):
-    def __init__(self, env, config_file, primary_direction, secondary_direction, width, height, resc):
+    def __init__(self, env, config_file, primary_direction, secondary_direction, width, height, quadrant, resc):
         super().__init__(env, config_file)
-        self.set_state(VS.ACTIVE) 
+        self.set_state(VS.ACTIVE)
+        self.quadrant = quadrant
         self.width = width
         self.height = height
         self.resc = resc
@@ -41,7 +42,7 @@ class Explorer(AbstAgent):
         score = 0 
         progress = (self.TLIM - self.get_rtime())/self.TLIM
         
-        if progress < 0.5:
+        if progress < 0.4:
             if self.primary_direction == "up":
                 score -= dy
             elif self.primary_direction == "down":
@@ -64,16 +65,16 @@ class Explorer(AbstAgent):
     
     def within_radius(self, coord):
         q = self.primary_direction
-        if q == "up":      # Quadrant 1
+        if q == "up" and self.quadrant:      # Quadrant 1
             if coord[0] < 0 or coord[1] > 0:
                 return False
-        elif q == "left":  # Quadrant 2
+        elif q == "left" and self.quadrant:  # Quadrant 2
             if coord[0] > 0 or coord[1] > 0:
                 return False
-        elif q == "down":  # Quadrant 3
+        elif q == "down" and self.quadrant:  # Quadrant 3
             if coord[0] > 0 or coord[1] < 0:
                 return False
-        elif q == "right": # Quadrant 4
+        elif q == "right" and self.quadrant: # Quadrant 4
             if coord[0] < 0 or coord[1] < 0:
                 return False
         
@@ -215,12 +216,12 @@ class Explorer(AbstAgent):
         self.y += next_value[1]
         
     def update_area(self):
-        growth_phase = 2.0
+        growth_phase = 5.0
         progress = (self.TLIM - self.get_rtime())/self.TLIM
         
-        if progress < 0.1:
-            growth_phase =  progress / 0.1
-
+        if progress < 0.15:
+            growth_phase =  progress / 0.15
+            
         self.reduced_area = self.base_area + growth_phase * (self.max_area - self.base_area)
 
     def deliberate(self) -> bool:
