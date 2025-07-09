@@ -35,7 +35,7 @@ class Rescuer(AbstAgent):
         self.y = 0                  
         self.set_state(VS.IDLE)
 
-    _SEVERITY_CLF_PATH = Path("models/severity_clf.joblib")
+    _SEVERITY_CLF_PATH = Path("models/severity_clf_mlp.joblib")
     _SEVERITY_REG_PATH = Path("models/severity_reg.joblib")
     
     def _load_or_train_models(self, X_train = None, y_class = None, y_value = None):

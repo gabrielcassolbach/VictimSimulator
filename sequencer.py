@@ -1,5 +1,5 @@
 import numpy as np
-#Algoritmo de busca local opt-2
+
 class Sequencer:
     def __init__(self):
         self.name = "Sequencer"
@@ -24,6 +24,7 @@ class Sequencer:
 
         return sequence
 
+    #Algoritmo de busca local opt-2
     def two_opt(self, route):
         best = route
         
