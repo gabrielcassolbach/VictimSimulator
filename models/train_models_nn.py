@@ -39,7 +39,7 @@ def train_and_save(
         [("num", StandardScaler(), list(range(X.shape[1])))],
         remainder="drop",
     )
-
+    # Classifier 1
     clf = Pipeline([
         ("pre", preproc),
         ("model", MLPClassifier(
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         )),
     ])
 
-    # Config 3: rede profunda leve
+    # Classifier 2
     clf = Pipeline([
         ("pre", preproc),
         ("model", MLPClassifier(
@@ -141,8 +141,8 @@ if __name__ == "__main__":
             random_state=seed
         )),
     ])
-
-     clf = Pipeline([
+    # Classifier 3
+    clf = Pipeline([
         ("pre", preproc),
         ("model", MLPClassifier(
             hidden_layer_sizes=(50,),   # 1 camada com 50 neurônios

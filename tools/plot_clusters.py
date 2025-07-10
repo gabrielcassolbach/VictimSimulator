@@ -2,7 +2,7 @@ import os
 import glob
 import matplotlib.pyplot as plt
 
-def plot_clusters(cluster_dir="../../clusters", pattern="cluster*.txt", out_file="clusters_plot.png"):
+def plot_clusters(cluster_dir="../clusters", pattern="cluster*.txt", out_file="../output/clusters_plot.png"):
     """
     Reads all files matching `pattern` in `cluster_dir` and plots
     their (x,y) points on a single scatter plot.
